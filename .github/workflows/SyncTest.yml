@@ -1,0 +1,34 @@
+name: SyncTest
+
+# Controls when the workflow will run
+on:
+  schedule:
+    - cron: '0 0 * * *' # every 30 minutes
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v2
+      - name: Sync and merge upstream repository with your current repository
+        uses: dabreadman/sync-upstream-repo@v1.3.0
+        with:
+          # URL of gitHub public upstream repo
+          upstream_repo: https://github.com/safing/portmaster
+          # Branch to merge from upstream (defaults to downstream branch)
+          upstream_branch: develop
+          # Branch to merge into downstream
+          downstream_branch: develop
+          # GitHub Bot token
+          token: ${{ secrets.PERSONAL_TOKEN}}
+          # Git fetch arguments
+          #fetch_args: # optional, default is 
+          # Git merge arguments
+          #merge_args: --no-ff 
+          # Git push arguments
+          #push_args: # optional, default is 
+          #pull_args: # optional, default is 
+
