@@ -134,7 +134,8 @@ type Connection struct { //nolint:maligned // TODO: fix alignment
 	// be changed during the lifetime of a connection and must be guarded
 	// using the connection lock.
 	Inspecting bool
-	// Tunneled is currently unused and MUST be ignored.
+	// Tunneled is set to true when the connection has been routed through the
+	// SPN.
 	Tunneled bool
 	// Encrypted is currently unused and MUST be ignored.
 	Encrypted bool
@@ -149,7 +150,10 @@ type Connection struct { //nolint:maligned // TODO: fix alignment
 	DNSContext *resolver.DNSRequestContext
 	// TunnelContext holds additional information about the tunnel that this
 	// connection is using.
-	TunnelContext interface{}
+	TunnelContext interface {
+		GetExitNodeID() string
+	}
+
 	// Internal is set to true if the connection is attributed as an
 	// Portmaster internal connection. Internal may be set at different
 	// points and access to it must be guarded by the connection lock.
