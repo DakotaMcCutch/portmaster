@@ -19,9 +19,9 @@ jobs:
           # URL of gitHub public upstream repo
           upstream_repo: https://github.com/safing/portmaster
           # Branch to merge from upstream (defaults to downstream branch)
-          upstream_branch: safing/portmaster/develop
+          upstream_branch: portmaster:develop
           # Branch to merge into downstream
-          downstream_branch: dakotamccutch/portmaster/develop
+          downstream_branch: develop
           # GitHub Bot token
           token: ${{ secrets.PERSONAL_TOKEN}}
           # Git fetch arguments
