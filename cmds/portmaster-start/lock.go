@@ -3,9 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -13,11 +13,25 @@ import (
 	processInfo "github.com/shirou/gopsutil/process"
 )
 
-func checkAndCreateInstanceLock(path, name string) (pid int32, err error) {
-	lockFilePath := filepath.Join(dataRoot.Path, path, fmt.Sprintf("%s-lock.pid", name))
+func checkAndCreateInstanceLock(path, name string, perUser bool) (pid int32, err error) {
+	var lockFilePath string
+	if perUser {
+		// Get user ID for per-user lock file.
+		var userID string
+		usr, err := user.Current()
+		if err != nil {
+			log.Printf("failed to get current user: %s\n", err)
+			userID = "no-user"
+		} else {
+			userID = usr.Uid
+		}
+		lockFilePath = filepath.Join(dataRoot.Path, path, fmt.Sprintf("%s-%s-lock.pid", name, userID))
+	} else {
+		lockFilePath = filepath.Join(dataRoot.Path, path, fmt.Sprintf("%s-lock.pid", name))
+	}
 
 	// read current pid file
-	data, err := ioutil.ReadFile(lockFilePath)
+	data, err := os.ReadFile(lockFilePath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// create new lock
@@ -78,7 +92,7 @@ func createInstanceLock(lockFilePath string) error {
 
 	// create lock file
 	// TODO: Investigate required permissions.
-	err = ioutil.WriteFile(lockFilePath, []byte(fmt.Sprintf("%d", os.Getpid())), 0o0666) //nolint:gosec
+	err = os.WriteFile(lockFilePath, []byte(fmt.Sprintf("%d", os.Getpid())), 0o0666) //nolint:gosec
 	if err != nil {
 		return err
 	}

@@ -34,8 +34,9 @@ var (
 		UpdateURLs: []string{
 			"https://updates.safing.io",
 		},
-		DevMode: false,
-		Online:  true, // is disabled later based on command
+		Verification: helper.VerificationConfig,
+		DevMode:      false,
+		Online:       true, // is disabled later based on command
 	}
 
 	rootCmd = &cobra.Command{
@@ -77,7 +78,7 @@ func main() {
 	cobra.OnInitialize(initCobra)
 
 	// set meta info
-	info.Set("Portmaster Start", "0.9.6", "AGPLv3", false)
+	info.Set("Portmaster Start", "0.9.7", "AGPLv3", false)
 
 	// catch interrupt for clean shutdown
 	signalCh := make(chan os.Signal, 2)
