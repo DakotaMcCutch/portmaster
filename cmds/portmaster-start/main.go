@@ -78,7 +78,7 @@ func main() {
 	cobra.OnInitialize(initCobra)
 
 	// set meta info
-	info.Set("Portmaster Start", "1.0.2", "AGPLv3", false)
+	info.Set("Portmaster Start", "1.0.12", "AGPLv3", false)
 
 	// catch interrupt for clean shutdown
 	signalCh := make(chan os.Signal, 2)
@@ -127,7 +127,7 @@ func initCobra() {
 
 	// set up logging
 	log.SetFlags(log.Ldate | log.Ltime | log.LUTC)
-	log.SetPrefix("[control] ")
+	log.SetPrefix("[pmstart] ")
 	log.SetOutput(os.Stdout)
 
 	// not using portbase logger
@@ -186,7 +186,7 @@ func ensureLoggingDir() error {
 
 func updateRegistryIndex(mustLoadIndex bool) error {
 	// Set indexes based on the release channel.
-	warning := helper.SetIndexes(registry, "", false)
+	warning := helper.SetIndexes(registry, "", false, false, false)
 	if warning != nil {
 		log.Printf("WARNING: %s\n", warning)
 	}
