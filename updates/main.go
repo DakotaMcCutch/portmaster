@@ -57,7 +57,11 @@ var (
 	// UserAgent is an HTTP User-Agent that is used to add
 	// more context to requests made by the registry when
 	// fetching resources from the update server.
-	UserAgent = "Core"
+	UserAgent = fmt.Sprintf("Portmaster (%s %s)", runtime.GOOS, runtime.GOARCH)
+
+	// DisableSoftwareAutoUpdate specifies whether software updates should be disabled.
+	// This is used on Android, as it will never require binary updates.
+	DisableSoftwareAutoUpdate = false
 )
 
 const (
@@ -145,7 +149,7 @@ func start() error {
 		registry,
 		initialReleaseChannel,
 		true,
-		enableSoftwareUpdates(),
+		enableSoftwareUpdates() && !DisableSoftwareAutoUpdate,
 		enableIntelUpdates(),
 	)
 	if warning != nil {
@@ -247,7 +251,7 @@ func checkForUpdates(ctx context.Context) (err error) {
 	}
 
 	defer func() {
-		// Resolve any error and and send succes notification.
+		// Resolve any error and send success notification.
 		if err == nil {
 			log.Infof("updates: successfully checked for updates")
 			notifyUpdateSuccess(forcedUpdate)
