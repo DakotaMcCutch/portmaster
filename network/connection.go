@@ -340,7 +340,7 @@ func NewConnectionFromDNSRequest(ctx context.Context, fqdn string, cnames []stri
 	if localProfile := proc.Profile().LocalProfile(); localProfile != nil {
 		dnsConn.Internal = localProfile.Internal
 
-		if err := dnsConn.updateFeatures(); err != nil && !errors.Is(err, access.ErrNotLoggedIn) {
+		if err := dnsConn.UpdateFeatures(); err != nil && !errors.Is(err, access.ErrNotLoggedIn) {
 			log.Tracer(ctx).Warningf("network: failed to check for enabled features: %s", err)
 		}
 	}
@@ -383,7 +383,7 @@ func NewConnectionFromExternalDNSRequest(ctx context.Context, fqdn string, cname
 	if localProfile := remoteHost.Profile().LocalProfile(); localProfile != nil {
 		dnsConn.Internal = localProfile.Internal
 
-		if err := dnsConn.updateFeatures(); err != nil && !errors.Is(err, access.ErrNotLoggedIn) {
+		if err := dnsConn.UpdateFeatures(); err != nil && !errors.Is(err, access.ErrNotLoggedIn) {
 			log.Tracer(ctx).Warningf("network: failed to check for enabled features: %s", err)
 		}
 	}
@@ -507,7 +507,7 @@ func (conn *Connection) GatherConnectionInfo(pkt packet.Packet) (err error) {
 		if localProfile := conn.process.Profile().LocalProfile(); localProfile != nil {
 			conn.Internal = localProfile.Internal
 
-			if err := conn.updateFeatures(); err != nil && !errors.Is(err, access.ErrNotLoggedIn) {
+			if err := conn.UpdateFeatures(); err != nil && !errors.Is(err, access.ErrNotLoggedIn) {
 				log.Tracer(pkt.Ctx()).Warningf("network: connection %s failed to check for enabled features: %s", conn, err)
 			}
 		}
@@ -578,16 +578,19 @@ func (conn *Connection) SetLocalIP(ip net.IP) {
 	conn.LocalIPScope = netutils.GetIPScope(ip)
 }
 
-// updateFeatures checks which connection related features may be used and sets
+// UpdateFeatures checks which connection related features may be used and sets
 // the flags accordingly.
-func (conn *Connection) updateFeatures() error {
+// The caller must hold a lock on the connection.
+func (conn *Connection) UpdateFeatures() error {
 	// Get user.
 	user, err := access.GetUser()
-	if err != nil {
+	if err != nil && !errors.Is(err, access.ErrNotLoggedIn) {
 		return err
 	}
+	// Caution: user may be nil!
 
 	// Check if history may be used and if it is enabled for this application.
+	conn.HistoryEnabled = false
 	if user.MayUse(account.FeatureHistory) {
 		lProfile := conn.Process().Profile()
 		if lProfile != nil {
@@ -596,9 +599,7 @@ func (conn *Connection) updateFeatures() error {
 	}
 
 	// Check if bandwidth visibility may be used.
-	if user.MayUse(account.FeatureBWVis) {
-		conn.BandwidthEnabled = true
-	}
+	conn.BandwidthEnabled = user.MayUse(account.FeatureBWVis)
 
 	return nil
 }
@@ -820,8 +821,10 @@ func (conn *Connection) StopFirewallHandler() {
 	conn.firewallHandler = nil
 
 	// Signal the packet handler worker that it can stop.
-	close(conn.pktQueue)
-	conn.pktQueueActive = false
+	if conn.pktQueueActive {
+		close(conn.pktQueue)
+		conn.pktQueueActive = false
+	}
 
 	// Unset the packet queue so that it can be freed.
 	conn.pktQueue = nil
