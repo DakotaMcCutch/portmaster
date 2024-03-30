@@ -59,7 +59,7 @@
     "topojson-simplify": "^3.0.3",
     "tslib": "^2.5.0",
     "whatwg-encoding": "^3.1.1",
-    "zone.js": "^0.13.0"
+    "zone.js": "^0.13.3"
   },
   "devDependencies": {
     "@angular-builders/custom-webpack": "^16.0.0-beta.1",
